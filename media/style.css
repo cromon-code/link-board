@@ -1,0 +1,77 @@
+/* media/style.css */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  padding: 20px;
+}
+
+h2 {
+  /* グリッドの最初の列から最後の列までを専有する設定 */
+  grid-column: 1 / -1;
+  
+  border-bottom: 1px solid var(--vscode-widget-border);
+  padding-bottom: 8px;
+  margin-top: 30px;
+}
+
+.link-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* ★★★ ここから下をファビコンレイアウト用に修正・追加 ★★★ */
+
+.card {
+  /* Flexboxを使って中身を横並びに */
+  display: flex;
+  align-items: center; /* 上下中央揃え */
+  gap: 12px; /* アイコンとテキストの間隔 */
+
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  padding: 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+/* ファビコン用のスタイル */
+.favicon {
+  border-radius: 3px;
+  flex-shrink: 0; /* コンテナが狭くなっても縮まないようにする */
+}
+
+/* テキストコンテンツをまとめるラッパー */
+.card-content {
+  flex: 1; /* 残りのスペースをすべて使う */
+  min-width: 0; /* これがないとテキストがはみ出た時にFlexboxが崩れることがある */
+}
+
+.card-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  /* 長い場合に...で省略する設定 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-description {
+  opacity: 0.8;
+  margin-top: 5px;
+  font-size: 0.9em;
+}

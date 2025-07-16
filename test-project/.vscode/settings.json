@@ -1,0 +1,43 @@
+{
+	// --- Test Link Board Settings ---
+	"link-board.links": [
+	  {
+		"label": "RRRReact Docs",
+		"url": "https://react.dev/",
+		"description": "The おふぃしゃる documentation for React."
+	  },
+	  {
+		"label": "React Docs",
+		"url": "https://react.dev/",
+		"description": "The おふぃしゃる documentation for React."
+	  },
+	  {
+		"label": "React Docs",
+		"url": "https://react.dev/",
+		"description": "The おふぃしゃる documentation for React."
+	  },
+	  {
+		"group": "Testing Libraries",
+		"links": [
+		  {
+			"label": "Jest",
+			"url": "https://jestjs.io/",
+			"description": "Delightful JavaScript Testing Framework."
+		  },
+		  {
+			"label": "React Testing Library",
+			"url": "https://testing-library.com/"
+		  },
+		  {
+			"label": "Jest",
+			"url": "https://jestjs.io/",
+			"description": "Delightful JavaScript Testing Framework."
+		  },
+		  {
+			"label": "React Testing Library",
+			"url": "https://testing-library.com/"
+		  },
+		]
+	  }
+	]
+}
