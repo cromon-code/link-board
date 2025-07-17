@@ -64,8 +64,8 @@ VSCode内でプロジェクトに関連するリンクを管理・表示する�
 
 ## リリースノート
 
-詳細は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+詳細は CHANGELOG.md を参照してください。
 
 ## ライセンス
 
-[MIT](LICENSE.md)
+MIT LICENSE

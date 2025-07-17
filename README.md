@@ -63,8 +63,8 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-See [CHANGELOG.md](CHANGELOG.md) for details.
+See CHANGELOG.md for details.
 
 ## License
 
-[MIT](LICENSE.md)
+MIT LICENSE
