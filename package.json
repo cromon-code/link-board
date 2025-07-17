@@ -6,7 +6,7 @@
   "description":  "A customizable dashboard for your project links, right inside VS Code.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/link-board.git"
+    "url": "https://github.com/cromon-code/link-board.git"
   },
   "icon": "images/icon.png",
   "engines": {
