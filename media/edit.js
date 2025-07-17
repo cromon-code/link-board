@@ -41,7 +41,7 @@
                     <textarea id="description-${index}" class="link-description" rows="3">${escapeHtml(link.description || '')}</textarea>
                 </div>
                 <div class="form-footer">
-                    <button class="delete-btn">このリンクを削除</button>
+                    <button class="delete-btn">Remove this link</button>
                 </div>
             `;
             linksContainer.appendChild(linkForm);

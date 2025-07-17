@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-// ★ 型定義をLinkItemのみに
 type LinkItem = {
     label: string;
     url: string;
@@ -15,7 +14,6 @@ let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
 
-    // ステータスバー項目
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'link-board.show';
     statusBarItem.text = `$(link) Link Board`;
@@ -30,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem.hide();
     }
 
-    // 表示用コマンド
+    // View Command
     context.subscriptions.push(
         vscode.commands.registerCommand('link-board.show', () => {
             if (displayPanel) {
@@ -59,7 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 編集用コマンド
+    // Edit Command
     context.subscriptions.push(
         vscode.commands.registerCommand('link-board.edit', async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -126,17 +124,15 @@ export function activate(context: vscode.ExtensionContext) {
             }, null, context.subscriptions);
         })
     );
-    // 設定変更を監視するリスナー (これは正しく記述されています)
+    // configuration changes Listener
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(event => {
-            // リンクのリストが変更された場合の処理
             if (event.affectsConfiguration('link-board.links') && displayPanel) {
                 const config = vscode.workspace.getConfiguration('link-board');
                 const linksConfig = config.get<LinkItem[]>('links') || [];
                 displayPanel.webview.html = getDisplayWebviewContent(context, displayPanel.webview, linksConfig);
             }
 
-            // ★ ステータスバー表示設定が変更された場合の処理を追加
             if (event.affectsConfiguration('link-board.showStatusBar')) {
                 const config = vscode.workspace.getConfiguration('link-board');
                 if (config.get<boolean>('showStatusBar')) {
@@ -149,7 +145,6 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-// ★ getDisplayWebviewContent関数を修正
 function getDisplayWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview, items: LinkItem[]): string {
     const allTags = new Set<string>();
     items.forEach(item => {
@@ -200,7 +195,7 @@ function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode
 
     return `
         <!DOCTYPE html>
-        <html lang="ja">
+        <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -209,15 +204,15 @@ function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode
             <link rel="stylesheet" href="${styleUri}">
         </head>
         <body>
-            <h1>リンクの編集</h1>
+            <h1>Edit Links</h1>
             
-            <a href="#actions" class="scroll-link">ページ下部の保存ボタンへ ↓</a>
+            <a href="#actions" class="scroll-link">Move to Bottom of Page ↓</a>
 
             <div id="links-container"></div>
 
             <div id="actions" class="actions-bar">
-                <button id="add-link-btn">新規リンクを追加</button>
-                <button id="save-changes-btn">変更を保存</button>
+                <button id="add-link-btn">Add New Link</button>
+                <button id="save-changes-btn">Save</button>
             </div>
 
             <script src="${scriptUri}"></script>
@@ -226,7 +221,6 @@ function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode
     `;
 }
 
-// ★ createCardHtml関数は変更なし
 function createCardHtml(link: LinkItem): string {
     let hostname = '';
     try {
