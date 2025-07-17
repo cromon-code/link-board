@@ -75,3 +75,66 @@ h2 {
   margin-top: 5px;
   font-size: 0.9em;
 }
+
+#search-box {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 25px;
+  border-radius: 5px;
+  border: 1px solid var(--vscode-input-border);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  outline: none;
+  font-size: 1em;
+}
+
+#search-box:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+mark {
+  background-color: yellow;
+  color: black;
+  font-weight: bold;
+}
+
+/* media/style.css の末尾に追記 */
+
+#tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tag-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--vscode-button-border);
+  background-color: transparent;
+  color: var(--vscode-button-secondaryForeground);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-btn:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.tag-btn.active {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+#no-results-message {
+  text-align: center;
+  margin-top: 40px;
+  font-style: italic;
+  color: var(--vscode-descriptionForeground);
+}
+
+.hidden {
+  display: none;
+}

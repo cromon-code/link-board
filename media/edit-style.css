@@ -1,0 +1,124 @@
+/* media/edit-style.css */
+body {
+    font-family: var(--vscode-font-family);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    padding: 20px;
+}
+
+h1 {
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--vscode-sideBar-border);
+    margin: 20px 0;
+}
+
+#links-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 15px; /* カード間の余白を少し詰める */
+}
+
+.link-form {
+    border: 1px solid var(--vscode-sideBar-border);
+    border-radius: 6px;
+    padding: 15px; /* カード内の余白を詰める */
+    background-color: var(--vscode-sideBar-background);
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* 各行の間の余白を詰める */
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.form-row label {
+    flex-basis: 50px;
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.form-group label {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 4px; /* Descriptionラベル下の余白を詰める */
+}
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 6px 10px; /* 入力欄内の余白を詰める */
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: var(--vscode-font-family);
+    font-size: 1em;
+    flex-grow: 1;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.form-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--vscode-widget-border);
+    text-align: right;
+}
+
+button {
+    padding: 6px 12px; /* ボタンの余白も少し詰める */
+    border: none;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em; /* ボタンの文字を少し小さく */
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.delete-btn {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.delete-btn:hover {
+    background-color: var(--vscode-errorForeground);
+    color: var(--vscode-button-foreground);
+}
+
+/* ボタンを右揃えで横に並べるスタイル */
+.actions-bar {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end; /* ★ 右揃えに変更 */
+    gap: 15px;
+}
+
+/* スクロール用リンクのスタイル */
+.scroll-link {
+    display: block;
+    text-align: left;
+    margin-bottom: 30px;
+    color: var(--vscode-descriptionForeground);
+    text-decoration: none;
+}
+.scroll-link:hover {
+    text-decoration: underline;
+}

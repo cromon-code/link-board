@@ -1,8 +1,14 @@
 {
   "name": "link-board",
+  "version": "1.0.0",
+  "publisher": "cromon",
   "displayName": "Link Board",
-  "description": "",
-  "version": "0.0.1",
+  "description":  "A customizable dashboard for your project links, right inside VS Code.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/link-board.git"
+  },
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.99.3"
   },
@@ -15,11 +21,11 @@
     "commands": [
       {
         "command": "link-board.show",
-        "title": "Link Board: Show LinkBard"
+        "title": "Link Board: Show"
       },
       {
-        "command": "link-board.reload",
-        "title": "Link Board: Reload"
+        "command": "link-board.edit",
+        "title": "Link Board: Edit Links"
       }
     ],
     "configuration": {
@@ -27,8 +33,31 @@
       "properties": {
         "link-board.links": {
           "type": "array",
-          "default": [],
-          "description": "An array of links and link-groups to display on the board."
+          "scope": "resource",
+          "description": "An array of links to display on the board.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "url": { "type": "string" },
+              "description": { "type": "string" },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["label", "url"]
+          }
+        },
+        "link-board.debounceTime": {
+          "type": "number",
+          "default": 150,
+          "description": "The debounce time in milliseconds for the search filter."
+        },
+        "link-board.showStatusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Link Board shortcut in the status bar."
         }
       }
     }
@@ -45,7 +74,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
+    "@types/vscode": "^1.99.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@typescript-eslint/eslint-plugin": "^8.28.0",

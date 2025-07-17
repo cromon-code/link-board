@@ -1,127 +1,241 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-// 型定義 (変更なし)
+// ★ 型定義をLinkItemのみに
 type LinkItem = {
     label: string;
     url: string;
     description?: string;
+    tags?: string[];
 };
-type GroupItem = {
-    group: string;
-    links: LinkItem[];
-};
-type ConfigItem = LinkItem | GroupItem;
 
-// パネルのキャッシュ用変数 (変更なし)
-let panel: vscode.WebviewPanel | undefined = undefined;
+let displayPanel: vscode.WebviewPanel | undefined = undefined;
+let editPanel: vscode.WebviewPanel | undefined = undefined;
+let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
+
+    // ステータスバー項目
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    statusBarItem.command = 'link-board.show';
+    statusBarItem.text = `$(link) Link Board`;
+    statusBarItem.tooltip = 'Click to open Link Board';
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
+
+    const initialConfig = vscode.workspace.getConfiguration('link-board');
+    if (initialConfig.get<boolean>('showStatusBar')) {
+        statusBarItem.show();
+    } else {
+        statusBarItem.hide();
+    }
+
+    // 表示用コマンド
     context.subscriptions.push(
         vscode.commands.registerCommand('link-board.show', () => {
-
-          if (panel) {
-                panel.reveal(vscode.ViewColumn.One);
+            if (displayPanel) {
+                displayPanel.reveal(vscode.ViewColumn.One);
                 return;
             }
 
-            panel = vscode.window.createWebviewPanel(
+            displayPanel = vscode.window.createWebviewPanel(
                 'linkBoard',
                 'Link Board',
                 vscode.ViewColumn.One,
                 {
-                    // mediaフォルダへのアクセスとスクリプトを有効にする
                     localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
-                    retainContextWhenHidden: true 
+                    retainContextWhenHidden: true,
+                    enableScripts: true // スクリプトを有効化
                 }
             );
 
             const config = vscode.workspace.getConfiguration('link-board');
-            const linksConfig = config.get<ConfigItem[]>('links');
+            const linksConfig = config.get<LinkItem[]>('links') || [];
+            displayPanel.webview.html = getDisplayWebviewContent(context, displayPanel.webview, linksConfig);
 
-            if (!linksConfig || linksConfig.length === 0) {
-                vscode.window.showInformationMessage('No links configured in settings.json for Link Board.');
-                panel.dispose();
-                return;
-            }
-
-            // コンテンツを生成して設定
-            panel.webview.html = getWebviewContent(context, panel.webview, linksConfig);
-
-            panel.onDidDispose(() => {
-                panel = undefined;
+            displayPanel.onDidDispose(() => {
+                displayPanel = undefined;
             }, null, context.subscriptions);
         })
     );
 
-  // 3. 設定変更を監視するリスナー (ここから追記)
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(event => {
-      // 変更が 'link-board.links' に影響するかチェック
-      if (event.affectsConfiguration('link-board.links')) {
-        // パネルが開かれている場合のみ、リロード処理を実行
-        if (panel) {
-          console.log('Link Boardの設定が変更されたため、WebViewをリロードします。');
-          const config = vscode.workspace.getConfiguration('link-board');
-          const linksConfig = config.get<ConfigItem[]>('links') || [];
-          panel.webview.html = getWebviewContent(context, panel.webview, linksConfig);
-        }
-      }
-    })
-  );
+    // 編集用コマンド
+    context.subscriptions.push(
+        vscode.commands.registerCommand('link-board.edit', async () => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders) {
+                vscode.window.showErrorMessage('フォルダが開かれていないため、リンクを編集できません。');
+                return;
+            }
+    
+            let targetFolderUri: vscode.Uri;
+            if (workspaceFolders.length === 1) {
+                targetFolderUri = workspaceFolders[0].uri;
+            } else {
+                const pickedFolder = await vscode.window.showQuickPick(
+                    workspaceFolders.map(folder => ({
+                        label: folder.name,
+                        description: folder.uri.fsPath,
+                        uri: folder.uri
+                    })),
+                    { placeHolder: 'リンクを編集するフォルダを選択してください' }
+                );
+                if (!pickedFolder) { return; }
+                targetFolderUri = pickedFolder.uri;
+            }
+
+            if (editPanel) {
+                editPanel.reveal(vscode.ViewColumn.One);
+                return;
+            }
+            editPanel = vscode.window.createWebviewPanel(
+                'linkBoardEdit', 'Edit Links', vscode.ViewColumn.One, {
+                    enableScripts: true,
+                    localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
+                    retainContextWhenHidden: true
+                }
+            );
+    
+            // 1. 編集用WebViewのHTMLコンテンツを設定
+            editPanel.webview.html = getEditWebviewContent(context, editPanel.webview);
+    
+            // 2. 現在のリンク情報をWebViewに送信
+            const config = vscode.workspace.getConfiguration('link-board', targetFolderUri);
+            const linksConfig = config.get<LinkItem[]>('links') || [];
+            editPanel.webview.postMessage({
+                type: 'load',
+                data: linksConfig
+            });
+    
+            // 3. WebViewからのメッセージ（保存通知）を受け取る
+            editPanel.webview.onDidReceiveMessage(
+                async message => {
+                    if (message.type === 'save') {
+                        // 受け取ったデータでsettings.jsonを更新
+                        await config.update('links', message.data, vscode.ConfigurationTarget.WorkspaceFolder);
+                        vscode.window.showInformationMessage('リンクを保存しました！');
+                        editPanel?.dispose(); // 保存したらパネルを閉じる
+                    }
+                },
+                null,
+                context.subscriptions
+            );
+    
+            editPanel.onDidDispose(() => {
+                editPanel = undefined;
+            }, null, context.subscriptions);
+        })
+    );
+    // 設定変更を監視するリスナー (これは正しく記述されています)
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(event => {
+            // リンクのリストが変更された場合の処理
+            if (event.affectsConfiguration('link-board.links') && displayPanel) {
+                const config = vscode.workspace.getConfiguration('link-board');
+                const linksConfig = config.get<LinkItem[]>('links') || [];
+                displayPanel.webview.html = getDisplayWebviewContent(context, displayPanel.webview, linksConfig);
+            }
+
+            // ★ ステータスバー表示設定が変更された場合の処理を追加
+            if (event.affectsConfiguration('link-board.showStatusBar')) {
+                const config = vscode.workspace.getConfiguration('link-board');
+                if (config.get<boolean>('showStatusBar')) {
+                    statusBarItem.show();
+                } else {
+                    statusBarItem.hide();
+                }
+            }
+        })
+    );
 }
 
-function getWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview, items: ConfigItem[]): string {
-    let linkCardsHtml = '';
+// ★ getDisplayWebviewContent関数を修正
+function getDisplayWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview, items: LinkItem[]): string {
+    const allTags = new Set<string>();
+    items.forEach(item => {
+        item.tags?.forEach(tag => allTags.add(tag));
+    });
 
-    // ★ リンクのHTML生成部分を変更
-    for (const item of items) {
-        if ('group' in item) {
-            linkCardsHtml += `<h2>${item.group}</h2>`;
-            const groupLinksHtml = item.links.map(link => createCardHtml(link)).join('');
-            linkCardsHtml += `<div class="card-container">${groupLinksHtml}</div>`;
-        } else {
-            linkCardsHtml += `<div class="card-container">${createCardHtml(item)}</div>`;
-        }
-    }
+    const tagButtonsHtml = `<div id="tag-container">
+        <button class="tag-btn active" data-tag="all">All</button>
+        ${[...allTags].map(tag => `<button class="tag-btn" data-tag="${tag}">${tag}</button>`).join('')}
+    </div>`;
 
-    // ★ CSSファイルを読み込むためのURIを生成
+    const linkCardsHtml = `<div class="card-container">
+        ${items.map(createCardHtml).join('')}
+    </div>`;
+    
     const stylePath = vscode.Uri.file(path.join(context.extensionPath, 'media', 'style.css'));
     const styleUri = webview.asWebviewUri(stylePath);
+    const scriptPath = vscode.Uri.file(path.join(context.extensionPath, 'media', 'main.js'));
+    const scriptUri = webview.asWebviewUri(scriptPath);
 
-    // ★ HTMLテンプレートを返す
     return `
         <!DOCTYPE html>
         <html lang="ja">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src https: data:;">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src https: data:; script-src ${webview.cspSource};">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Link Board</title>
             <link rel="stylesheet" href="${styleUri}">
         </head>
-        <body>
+        <body data-debounce-time="250">
             <h1>Link Board</h1>
+            
+            <input type="text" id="search-box" placeholder="Filter links...">
+            
+            ${tagButtonsHtml}
+            <div id="no-results-message" class="hidden">一致するリンクはありませんでした。</div>
             ${linkCardsHtml}
+            <script src="${scriptUri}"></script>
         </body>
         </html>
     `;
 }
 
-// ★ カード1枚分のHTMLを生成するヘルパー関数を追加
+function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview): string {
+    const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'edit-style.css')));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'edit.js')));
+
+    return `
+        <!DOCTYPE html>
+        <html lang="ja">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src ${webview.cspSource};">
+            <title>Edit Links</title>
+            <link rel="stylesheet" href="${styleUri}">
+        </head>
+        <body>
+            <h1>リンクの編集</h1>
+            
+            <a href="#actions" class="scroll-link">ページ下部の保存ボタンへ ↓</a>
+
+            <div id="links-container"></div>
+
+            <div id="actions" class="actions-bar">
+                <button id="add-link-btn">新規リンクを追加</button>
+                <button id="save-changes-btn">変更を保存</button>
+            </div>
+
+            <script src="${scriptUri}"></script>
+        </body>
+        </html>
+    `;
+}
+
+// ★ createCardHtml関数は変更なし
 function createCardHtml(link: LinkItem): string {
     let hostname = '';
     try {
-        // URLからホスト名を取得
         hostname = new URL(link.url).hostname;
-    } catch (e) {
-        // URLが不正な形式の場合は何もしない
-    }
-    // Googleのサービスを使ってファビコンのURLを生成
+    } catch (e) {}
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
 
     return `
-        <a href="${link.url}" class="card">
+        <a href="${link.url}" class="card" data-tags="${link.tags?.join(',') || ''}">
             <img src="${faviconUrl}" class="favicon" alt="" width="20" height="20">
             <div class="card-content">
                 <div class="card-title">${link.label}</div>
