@@ -1,6 +1,6 @@
 {
   "name": "link-board",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "cromon",
   "displayName": "Link Board",
   "description": "A customizable dashboard for your project links, right inside VS Code.",

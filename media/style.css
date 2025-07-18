@@ -21,13 +21,9 @@ h2 {
 }
 
 .card-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+  column-width: 240px; /* 各カラムの幅の目安 */
+  column-gap: 15px;   /* カラム間の隙間 */
 }
-
-/* ★★★ ここから下をファビコンレイアウト用に修正・追加 ★★★ */
 
 .card {
   /* Flexboxを使って中身を横並びに */
@@ -41,6 +37,9 @@ h2 {
   border-radius: 5px;
   text-decoration: none;
   transition: transform 0.2s;
+
+  break-inside: avoid; /* カードが列の途中で分割されるのを防ぐ */
+  margin-bottom: 15px;  /* カードの縦方向の隙間 */
 }
 
 .card:hover {
@@ -98,8 +97,6 @@ mark {
   color: black;
   font-weight: bold;
 }
-
-/* media/style.css の末尾に追記 */
 
 #tag-container {
   display: flex;
