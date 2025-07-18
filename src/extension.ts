@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 
 type LinkItem = {
     label: string;
@@ -18,7 +19,6 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.command = 'link-board.show';
     statusBarItem.text = `$(link) Link Board`;
     statusBarItem.tooltip = 'Click to open Link Board';
-    statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
     const initialConfig = vscode.workspace.getConfiguration('link-board');
@@ -38,12 +38,12 @@ export function activate(context: vscode.ExtensionContext) {
 
             displayPanel = vscode.window.createWebviewPanel(
                 'linkBoard',
-                'Link Board',
+                'Link Board', // ★
                 vscode.ViewColumn.One,
                 {
                     localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
                     retainContextWhenHidden: true,
-                    enableScripts: true // スクリプトを有効化
+                    enableScripts: true
                 }
             );
 
@@ -59,10 +59,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Edit Command
     context.subscriptions.push(
-        vscode.commands.registerCommand('link-board.edit', async () => {
+        vscode.commands.registerCommand('link-board.edit', async () => { // ★ コマンド名を 'editLinks' に修正
             const workspaceFolders = vscode.workspace.workspaceFolders;
             if (!workspaceFolders) {
-                vscode.window.showErrorMessage('フォルダが開かれていないため、リンクを編集できません。');
+                vscode.window.showErrorMessage('A folder must be opened to edit links.'); // ★
                 return;
             }
     
@@ -71,12 +71,12 @@ export function activate(context: vscode.ExtensionContext) {
                 targetFolderUri = workspaceFolders[0].uri;
             } else {
                 const pickedFolder = await vscode.window.showQuickPick(
-                    workspaceFolders.map(folder => ({
+                    workspaceFolders.map((folder: vscode.WorkspaceFolder) => ({
                         label: folder.name,
                         description: folder.uri.fsPath,
                         uri: folder.uri
                     })),
-                    { placeHolder: 'リンクを編集するフォルダを選択してください' }
+                    { placeHolder: 'Select a folder to edit links for' } // ★
                 );
                 if (!pickedFolder) { return; }
                 targetFolderUri = pickedFolder.uri;
@@ -87,17 +87,15 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             editPanel = vscode.window.createWebviewPanel(
-                'linkBoardEdit', 'Edit Links', vscode.ViewColumn.One, {
+                'linkBoardEdit', 'Edit Links', vscode.ViewColumn.One, { // ★
                     enableScripts: true,
                     localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
                     retainContextWhenHidden: true
                 }
             );
     
-            // 1. 編集用WebViewのHTMLコンテンツを設定
             editPanel.webview.html = getEditWebviewContent(context, editPanel.webview);
     
-            // 2. 現在のリンク情報をWebViewに送信
             const config = vscode.workspace.getConfiguration('link-board', targetFolderUri);
             const linksConfig = config.get<LinkItem[]>('links') || [];
             editPanel.webview.postMessage({
@@ -105,14 +103,12 @@ export function activate(context: vscode.ExtensionContext) {
                 data: linksConfig
             });
     
-            // 3. WebViewからのメッセージ（保存通知）を受け取る
             editPanel.webview.onDidReceiveMessage(
-                async message => {
+                async (message: any) => {
                     if (message.type === 'save') {
-                        // 受け取ったデータでsettings.jsonを更新
                         await config.update('links', message.data, vscode.ConfigurationTarget.WorkspaceFolder);
-                        vscode.window.showInformationMessage('リンクを保存しました！');
-                        editPanel?.dispose(); // 保存したらパネルを閉じる
+                        vscode.window.showInformationMessage('Links saved successfully!'); // ★
+                        editPanel?.dispose();
                     }
                 },
                 null,
@@ -124,9 +120,10 @@ export function activate(context: vscode.ExtensionContext) {
             }, null, context.subscriptions);
         })
     );
-    // configuration changes Listener
+    
+    // Configuration Changes Listener
     context.subscriptions.push(
-        vscode.workspace.onDidChangeConfiguration(event => {
+        vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
             if (event.affectsConfiguration('link-board.links') && displayPanel) {
                 const config = vscode.workspace.getConfiguration('link-board');
                 const linksConfig = config.get<LinkItem[]>('links') || [];
@@ -160,38 +157,41 @@ function getDisplayWebviewContent(context: vscode.ExtensionContext, webview: vsc
         ${items.map(createCardHtml).join('')}
     </div>`;
     
-    const stylePath = vscode.Uri.file(path.join(context.extensionPath, 'media', 'style.css'));
-    const styleUri = webview.asWebviewUri(stylePath);
-    const scriptPath = vscode.Uri.file(path.join(context.extensionPath, 'media', 'main.js'));
-    const scriptUri = webview.asWebviewUri(scriptPath);
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'main.js'));
+    const nonce = getNonce();
 
     return `
         <!DOCTYPE html>
-        <html lang="ja">
+        <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src https: data:; script-src ${webview.cspSource};">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src https: data:; script-src 'nonce-${nonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Link Board</title>
             <link rel="stylesheet" href="${styleUri}">
         </head>
         <body data-debounce-time="250">
             <h1>Link Board</h1>
-            
             <input type="text" id="search-box" placeholder="Filter links...">
-            
             ${tagButtonsHtml}
-            <div id="no-results-message" class="hidden">一致するリンクはありませんでした。</div>
+            <div id="no-results-message" class="hidden">No matching links found.</div>
             ${linkCardsHtml}
-            <script src="${scriptUri}"></script>
+            <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>
         </html>
     `;
 }
 
 function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview): string {
-    const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'edit-style.css')));
-    const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'edit.js')));
+    const config = vscode.workspace.getConfiguration('link-board');
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'edit-style.css'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'edit.js'));
+    const nonce = getNonce();
+    
+    const webviewStrings = {
+        showDeleteConfirmation: config.get<boolean>('showDeleteConfirmation')
+    };
 
     return `
         <!DOCTYPE html>
@@ -199,23 +199,31 @@ function getEditWebviewContent(context: vscode.ExtensionContext, webview: vscode
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src ${webview.cspSource};">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
             <title>Edit Links</title>
             <link rel="stylesheet" href="${styleUri}">
         </head>
         <body>
+            <script nonce="${nonce}">
+                window.config = ${JSON.stringify(webviewStrings)};
+            </script>
+            <div id="confirm-modal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <p id="modal-text"></p>
+                    <div class="modal-actions">
+                        <button id="modal-confirm-btn">OK</button>
+                        <button id="modal-cancel-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
             <h1>Edit Links</h1>
-            
-            <a href="#actions" class="scroll-link">Move to Bottom of Page ↓</a>
-
+            <a href="#actions" class="scroll-link">Scroll to Save Area ↓</a>
             <div id="links-container"></div>
-
             <div id="actions" class="actions-bar">
                 <button id="add-link-btn">Add New Link</button>
-                <button id="save-changes-btn">Save</button>
+                <button id="save-changes-btn">Save Changes</button>
             </div>
-
-            <script src="${scriptUri}"></script>
+            <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>
         </html>
     `;
@@ -237,6 +245,10 @@ function createCardHtml(link: LinkItem): string {
             </div>
         </a>
     `;
+}
+
+function getNonce() {
+    return randomBytes(16).toString('base64');
 }
 
 export function deactivate() {}

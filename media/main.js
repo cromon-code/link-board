@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const debounceTime = parseInt(document.body.dataset.debounceTime || '150', 10);
+
+    const debounceTime = parseInt(document.body.dataset.debounceTime || '250', 10);
 
     const searchBox = document.getElementById('search-box');
     const tagContainer = document.getElementById('tag-container');
@@ -7,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!searchBox || !tagContainer) { return; }
 
-    // --- 1. デバウンス関数を定義 ---
     function debounce(func, delay) {
         let timeoutId;
         return function(...args) {
@@ -18,18 +18,15 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // --- 2. デバウンスされたフィルタリング関数を作成 ---
     const debouncedApplyFilters = debounce(applyFilters, debounceTime);
 
-    // --- 3. イベントリスナーを修正 ---
-    // 検索ボックスの入力にはデバウンス版を、タグクリックには即時実行版を使用
     searchBox.addEventListener('input', debouncedApplyFilters);
     tagContainer.addEventListener('click', function(e) {
         if (e.target.classList.contains('tag-btn')) {
             tagContainer.querySelector('.active')?.classList.remove('active');
             e.target.classList.add('active');
             activeTag = e.target.dataset.tag;
-            applyFilters(); // タグクリックは即時反映
+            applyFilters();
         }
     });
 
@@ -55,13 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (visibleCardsCount === 0) {
+            noResultsMessage.textContent = 'No matching links found.';
             noResultsMessage.classList.remove('hidden');
         } else {
             noResultsMessage.classList.add('hidden');
         }
     }
 
-    // highlightTextInCard, removeHighlightsInCard, highlightText, escapeRegExp 関数は変更なし
     function highlightTextInCard(card, searchTerm) {
         const titleElement = card.querySelector('.card-title');
         const descriptionElement = card.querySelector('.card-description');

@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-07-18
+
+### Fixed
+
+* Resolved an issue where the delete confirmation modal was blocked by the WebView's security sandbox, preventing links from being deleted. A custom modal is now used.
+* Corrected various TypeScript and Webpack build configuration errors.
+
 ## [1.0.1] - 2025-07-18
 
 ### Fixed
 - Fixed the link to the repository.
+
 ## [1.0.0] - 2025-07-17
 
 ### Added

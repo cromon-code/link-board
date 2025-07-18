@@ -122,3 +122,44 @@ button:hover {
 .scroll-link:hover {
     text-decoration: underline;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--vscode-editorWidget-background);
+    padding: 20px 30px;
+    border-radius: 6px;
+    border: 1px solid var(--vscode-widget-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.modal-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+#modal-confirm-btn {
+    background-color: var(--vscode-button-primary-background);
+    color: var(--vscode-button-primary-foreground);
+}
+#modal-confirm-btn:hover {
+    background-color: var(--vscode-button-primary-hoverBackground);
+}
+
+.hidden {
+    display: none;
+}
