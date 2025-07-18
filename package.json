@@ -1,6 +1,6 @@
 {
   "name": "link-board",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "cromon",
   "displayName": "Link Board",
   "description": "A customizable dashboard for your project links, right inside VS Code.",
@@ -15,7 +15,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
